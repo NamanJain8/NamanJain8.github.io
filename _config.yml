@@ -5,9 +5,10 @@ rdiscount:
   extensions: [smart]
 permalink: /:title.html
 paginate: 5
-plugins: [jekyll-paginate]
+# plugins: [jekyll-paginate]
 port: 3000
 safe: true
+gems: [jekyll-paginate]
 
 # edit here to achieve your personal greatness
 url: http://namanjain8.github.io/
