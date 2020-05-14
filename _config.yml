@@ -8,15 +8,16 @@ paginate: 5
 # plugins: [jekyll-paginate]
 #port: 3000
 safe: true
-gems: [jekyll-paginate]
+gems: 
+  - jekyll-paginate
 
 # edit here to achieve your personal greatness
 url: http://namanjain8.github.io/
-baseurl: ""
+baseurl: "/"
 title: Naman Jain
 author: Naman Jain
 description: Personal blog and resume
-avatar: profile.png
+avatar: profile.jpg
 email: jnaman806@gmail.com
 github: jekyller/sustain # username
 twitter: JainNaman18
@@ -25,7 +26,6 @@ stackoverflow: users/9471721/naman-jain   #e.g: users/2735833/proton1h1
 #Comment out if you don't want disqus
 #disqus: username
 #google_analytics: UA-69391421-1
-
 
 # needed for travis-ci build
 exclude: [vendor]
