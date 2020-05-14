@@ -9,7 +9,6 @@ plugins: [jekyll-paginate]
 port: 3000
 safe: true
 
-
 # edit here to achieve your personal greatness
 url: http://namanjain8.github.io/
 baseurl: /sustain/
