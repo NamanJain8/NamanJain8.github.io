@@ -13,13 +13,12 @@ gems:
 
 # edit here to achieve your personal greatness
 url: http://namanjain8.github.io/
-baseurl: "/"
 title: Naman Jain
 author: Naman Jain
 description: Personal blog and resume
 avatar: profile.jpg
 email: jnaman806@gmail.com
-github: jekyller/sustain # username
+github:  NamanJain8 # username
 twitter: JainNaman18
 linkedin: naman1811
 stackoverflow: users/9471721/naman-jain   #e.g: users/2735833/proton1h1
