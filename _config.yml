@@ -30,3 +30,7 @@ stackoverflow: users/9471721/naman-jain   #e.g: users/2735833/proton1h1
 
 # needed for travis-ci build
 exclude: [vendor]
+
+# Google Analytics
+google_analytics: G-PNG8FL2V15
+
