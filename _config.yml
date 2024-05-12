@@ -8,7 +8,7 @@ paginate: 5
 # plugins: [jekyll-paginate]
 #port: 3000
 safe: true
-gems: 
+plugins:
   - jekyll-paginate
   - jekyll-redirect-from
 
@@ -23,10 +23,7 @@ email: jnaman806@gmail.com
 github:  NamanJain8 # username
 twitter: JainNaman18
 linkedin: naman1811
-stackoverflow: users/9471721/naman-jain   #e.g: users/2735833/proton1h1
-#Comment out if you don't want disqus
-#disqus: username
-#google_analytics: UA-69391421-1
+stackoverflow: users/9471721/naman-jain
 
 # needed for travis-ci build
 exclude: [vendor]
