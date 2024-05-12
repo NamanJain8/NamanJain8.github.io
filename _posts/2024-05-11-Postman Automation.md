@@ -3,60 +3,55 @@ layout: post
 title: Postman Automation
 ---
 
-I believe **“Anything that can be automated, should be automated”**. That comes with a pinch of salt.
+I believe **“Any boring and repetitive task that can be automated should be automated”**. That comes with a pinch of salt (Reference: [https://xkcd.com/1205/](https://xkcd.com/1205/)).
 
-<img src="/static/img/posts/postman-automation/automation_grid.png" alt="Automation Grid" width="100%"/>
+<br><center><img src="/static/img/posts/postman-automation/automation_grid.png" alt="Automation Grid" width="90%"/><center><br>
 
-Reference: [https://xkcd.com/1205/](https://xkcd.com/1205/)
 
-As a developer, we heavily use Postman or similar software for API development and testing. It provides highly enriched support like environments, variables, pre-request scripts, collection runner, etc. One of the important feature that we will be discussing is pre-request script.
+We developers heavily use Postman or similar software for API development and testing. It is highly enriched with features like environments, variables, pre-request scripts, collection runner, etc. One of the critical features that we will be discussing is the **pre-request script**.
 
 A pre-request script associated with a request will execute before the request is sent. It provides capabilities like dynamically setting data and variables, request manipulation, conditional logic, etc.
 
 <img src="/static/img/posts/postman-automation/request_exec_order.png" alt="Request Execution Order" width="100%"/>
 
-One of the major use case is setting the Authorization header in the request. This token is generally fetched from the remote server. Using pre-request script, this can be done easily.
+One of the major use case is setting the `Authorization` header in the request. This token is generally fetched from the remote server. Using pre-request script, this can be done easily.
 
 ```javascript
 pm.sendRequest("https://auth.xyz.com/token", function (err, response) {
-    console.log(response.json());
-    pm.environment.set("Authorization", response.json()["token"])
+    pm.environment.set("Authorization", JSON.parse(response.text())["token"])
 });
 ```
 
 Let’s go over one of the use-case that I encountered recently. Consider the following setup simplified for the purpose of blog.
 - Catalogue service contains the list of books read by a given user. Access to the catalogue of a given user requires the valid user token.
-- We are a super-admin testing the APIs and have to impersonate as user. There exists an “Auth CLI” to generate the impersonation token. The CLI and the Auth Server is managed by some other team or third-party. Hence, we don’t have direct access to the auth server APIs.
+- We are a super-admin impersonating the user for testing the APIs. An “Auth CLI” exists to generate the impersonation token. Another team/third-party manages the CLI and the Auth Server. Hence, we don’t have direct access to the auth server APIs.
 
-<img src="/static/img/posts/postman-automation/setup.svg" alt="Setup" width="100%"/>
+<br><center><img src="/static/img/posts/postman-automation/setup.svg" alt="Setup" width="80%"/><center>
 
-As Postman runs within a sandboxed environment, there are few limitations of the scripting.
-- Postman supports only few limited external libraries that limits what can be done via this script. For example, we can’t access the filesystem to persist the responses.
-- CLI commands cannot be executed from the scripts. Not all the external services might provide API support, or it might not be well documented APIs. Rather they might just provide a decent CLI access to do things.
+In our setup, while testing, we might have to switch users, generate a token using CLI for each user, paste it into the Postman environment, and execute the API. The token would have some validity, after which it expires. We will have to regenerate the token and continue. This is boring and calls for automation. We could have completely relied on Postman's pre-request script, but it runs in a sandboxed environment and has a few limitations.
+
+- It _supports only a few limited external libraries_ that limit what can be done via this script. For example, we can’t access the filesystem to persist the responses.
+- _CLI commands cannot be executed_ from the scripts. Not all external services provide API support, or they might not be well-documented APIs. Instead, they might just offer decent CLI access to do things.
 
 Moreover, not everyone is comfortable with Javascript. Developers would prefer writing complex logic for scripting in the language of their choice.
 
-In our setup, while testing we might have to switch from user to user; generating token using CLI for each of the user, paste it in Postman environment and execute the API. The token would have some validity after which it expires. We will have to regenerate the token and continue. This is boring and calls for automation.
+**Introducing Token Service:** It is an intelligent service that generates the token for a given user, caches it, and refreshes the expired token on demand. It internally runs the Auth CLI as direct API access to the Auth Server is not available or straightforward for a variety of reasons.
 
-**Introducing Token Service:** It is a smart service that generates the token for a given user, caches it and refreshes the expired token on demand. It internally runs the Auth CLI as direct API access to Auth Server is not be available or straightforward for variety of reasons.
-
-Using pre-request script, we can call Token Service and we are free from hassle of generating token as we switch from user to user users or the token expires.
-
-Similarily, we can persist the response into filesystem for analysis later. This can be done using the post-response script integrated with a service running locally. This local service would write to filesystem after sanitising the response.
+With a pre-request script, we call Token Service, eliminating token generation hassle during user switches or expiration. We can also save responses to the filesystem for later analysis using a post-response script integrated with a local service that sanitizes the data before writing.
 
 #### Why would we need to run such service locally?
 
 - Entire development setup is local, and we don’t want to introduce any remote dependency.
 - Authn/Authz details might be stored on the local device, and gets updated frequently for compliance reasons.
-- Token service itself might be in development phase; and we want to iterate fast. Once developed completely, it could be hosted on cloud.
+- Token service might be in development, and we want to iterate fast. Once developed completely, it could be hosted on the cloud.
 
 ### Token Service as LaunchAgent
 
-We have automated the small part of token generation but still we have to launch this service locally everytime we want to use these Postman APIs. It might be better to spin this up as a launch agent, that runs whenever the machine is running. 
+We've automated token generation partially, but currently, we must manually launch this service locally to utilize Postman APIs. It could be more efficient to set it up as a launch agent that runs whenever the machine runs.
 
-In MacOS, this can be done by setting this service as Launch Agent. It can be done simply in few steps.
+In MacOS, this can be done by configuring this service to run as **Launch Agent**. It can be done simply in a few steps.
 
-1. Create a plist file `com.local.token.plist` under `~/Library/LaunchAgents/` directory. Here, we are adding the file to dump the logs, and setting it up to run at load time.
+1. Create a plist file `com.local.token.plist` under `~/Library/LaunchAgents/` directory. Here, we are configuring it to run at load time, and monitor using logs.
 
     ```xml
     <?xml version="1.0" encoding="UTF-8"?>
@@ -86,8 +81,6 @@ In MacOS, this can be done by setting this service as Launch Agent. It can be do
     launchctl load ~/Library/LaunchAgents/com.local.token.plist
     ```
 
-Now, the service can be managed using launchctl. For example, if you update the service definition or the binary, the service can be force restarted using `launchctl kickstart -kp com.local.token` command.
+Now, the service can be managed using launchctl. For example, if we update the service definition or the binary, the service can be force restarted using `launchctl kickstart -kp com.local.token` command. In linux, service can be launched as daemon using [systemd](https://www.linode.com/docs/guides/start-service-at-boot/).
 
-The same can be done via [systemd in Linux](https://www.linode.com/docs/guides/start-service-at-boot/).
-
-Entire code for this sample can be accessed at [Github Repo](https://github.com/NamanJain8/postman-automation).
+The complete code for the example is available on [GitHub](https://github.com/NamanJain8/postman-automation) with instructions for running included.
